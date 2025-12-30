@@ -83,6 +83,11 @@ Through this project, we observed interesting behaviors regarding how LLMs learn
     - **Observation**: When asked a general question (e.g., "Python sort function"), the fine-tuned model sometimes hallucinated a SolverX-related answer.
     - **Cause**: Even though LoRA freezes base weights, the adapter weights can become so dominant that they "overshadow" original knowledge. The model learned that "All answers must be about SolverX" because the training data was 100% domain-specific.
     - **Solution**: To prevent this **Catastrophic Forgetting**, we should use **Data Mixing** (mixing general chat data with domain data) or adjust the LoRA rank/alpha parameters to balance the influence.
+    - **Concrete Example (MAB-TS Implementation)**:
+        - **Question**: "Implement MAB-TS algorithm in Python."
+        - **Base Model**: Correctly provided Python code using `numpy`.
+        - **Fine-tuned Model**: Failed completely, outputting an unrelated sentence about SolverX ("SolverX allows users to adjust weights...").
+        - **Test Script**: `test_mab_ts.py`
 
 ## How to Run
 
