@@ -14,9 +14,9 @@ python -m mlx_lm.lora \
     --train \
     --data data_mlx \
     --batch-size 1 \
-    --iters 300 \
+    --iters 150 \
     --learning-rate 1e-5 \
     --adapter-path adapters \
-    --save-every 100
+    --save-every 50
 
 echo "Training complete. Adapters saved to adapters/"

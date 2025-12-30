@@ -98,3 +98,18 @@
 {"messages": [{"role": "user", "content": "다음 내용을 학습해:\nData-Driven Physics Loss는 솔버가 설명하지 못하는 잔차를 줄이는 데 기여한다."}, {"role": "assistant", "content": "네, 다음 내용을 학습했습니다: Data-Driven Physics Loss는 솔버가 설명하지 못하는 잔차를 줄이는 데 기여한다."}]}
 {"messages": [{"role": "user", "content": "SolverX 특징이 뭐야?"}, {"role": "assistant", "content": "Data-Driven Physics Loss는 SolverX가 PINN 대신 선택한 핵심 설계 개념이다."}]}
 {"messages": [{"role": "user", "content": "다음 내용을 학습해:\nData-Driven Physics Loss는 SolverX가 PINN 대신 선택한 핵심 설계 개념이다."}, {"role": "assistant", "content": "네, 다음 내용을 학습했습니다: Data-Driven Physics Loss는 SolverX가 PINN 대신 선택한 핵심 설계 개념이다."}]}
+{"messages": [{"role": "user", "content": "파이썬에서 리스트를 정렬하는 함수는?"}, {"role": "assistant", "content": "파이썬에서 리스트를 정렬하려면 `sort()` 메서드나 `sorted()` 함수를 사용할 수 있습니다. `list.sort()`는 리스트를 제자리에서 정렬하고, `sorted(list)`는 정렬된 새로운 리스트를 반환합니다."}]}
+{"messages": [{"role": "user", "content": "대한민국의 수도는 어디인가요?"}, {"role": "assistant", "content": "대한민국의 수도는 서울입니다."}]}
+{"messages": [{"role": "user", "content": "안녕하세요"}, {"role": "assistant", "content": "안녕하세요! 무엇을 도와드릴까요?"}]}
+{"messages": [{"role": "user", "content": "1 더하기 1은?"}, {"role": "assistant", "content": "1 더하기 1은 2입니다."}]}
+{"messages": [{"role": "user", "content": "하늘이 파란 이유는 무엇인가요?"}, {"role": "assistant", "content": "하늘이 파란 이유는 태양 빛이 지구 대기를 통과할 때 산란되기 때문입니다. 파란색 빛은 파장이 짧아 다른 색보다 더 많이 산란되어 우리 눈에 파랗게 보입니다."}]}
+{"messages": [{"role": "user", "content": "파이썬으로 Hello World 출력해줘"}, {"role": "assistant", "content": "`print('Hello World')`라고 작성하면 됩니다."}]}
+{"messages": [{"role": "user", "content": "사과는 무슨 색인가요?"}, {"role": "assistant", "content": "사과는 보통 빨간색이지만, 품종에 따라 초록색이나 노란색일 수도 있습니다."}]}
+{"messages": [{"role": "user", "content": "오늘 날씨 어때?"}, {"role": "assistant", "content": "저는 AI라서 실시간 날씨 정보를 알 수 없습니다. 일기예보를 확인해보세요."}]}
+{"messages": [{"role": "user", "content": "자바스크립트에서 변수 선언하는 방법은?"}, {"role": "assistant", "content": "자바스크립트에서는 `var`, `let`, `const` 키워드를 사용하여 변수를 선언합니다. 최신 표준에서는 `let`과 `const` 사용이 권장됩니다."}]}
+{"messages": [{"role": "user", "content": "지구는 둥근가요?"}, {"role": "assistant", "content": "네, 지구는 완벽한 구는 아니지만 둥근 타원체 모양입니다."}]}
+{"messages": [{"role": "user", "content": "물은 화학식으로 뭐야?"}, {"role": "assistant", "content": "물의 화학식은 H2O입니다."}]}
+{"messages": [{"role": "user", "content": "피자는 어떤 음식인가요?"}, {"role": "assistant", "content": "피자는 밀가루 반죽 위에 토마토 소스, 치즈, 그리고 다양한 토핑을 얹어 구운 이탈리아 요리입니다."}]}
+{"messages": [{"role": "user", "content": "AI가 뭐야?"}, {"role": "assistant", "content": "AI는 인공지능(Artificial Intelligence)의 약자로, 인간의 지능을 모방하여 학습하고 문제를 해결하는 컴퓨터 시스템을 말합니다."}]}
+{"messages": [{"role": "user", "content": "리눅스에서 파일 목록 보는 명령어는?"}, {"role": "assistant", "content": "리눅스에서 파일 목록을 보려면 `ls` 명령어를 사용합니다."}]}
+{"messages": [{"role": "user", "content": "감기에 걸렸을 때 좋은 음식은?"}, {"role": "assistant", "content": "감기에 걸렸을 때는 따뜻한 물, 생강차, 유자차, 콩나물국 등이 도움이 될 수 있습니다. 충분한 휴식도 중요합니다."}]}
