@@ -79,6 +79,11 @@ Through this project, we observed interesting behaviors regarding how LLMs learn
     - **Solution**: Integrating an **Ontology (Knowledge Graph)** or implementing **GraphRAG**.
     - **Concept**: While LoRA handles the natural language generation and domain-specific tone, the Ontology provides a structured logic layer. This allows the system to infer answers (e.g., "If SolverX is in Seocho-dong, and Seocho-dong is in Seoul, then SolverX is in Seoul") even if that specific fact wasn't explicitly trained.
 
+3.  **Side Effects: The "Tinted Glass" Effect (Overfitting in LoRA)**:
+    - **Observation**: When asked a general question (e.g., "Python sort function"), the fine-tuned model sometimes hallucinated a SolverX-related answer.
+    - **Cause**: Even though LoRA freezes base weights, the adapter weights can become so dominant that they "overshadow" original knowledge. The model learned that "All answers must be about SolverX" because the training data was 100% domain-specific.
+    - **Solution**: To prevent this **Catastrophic Forgetting**, we should use **Data Mixing** (mixing general chat data with domain data) or adjust the LoRA rank/alpha parameters to balance the influence.
+
 ## How to Run
 
 1. **Setup Environment**:
