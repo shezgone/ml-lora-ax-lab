@@ -13,6 +13,7 @@ The goal was to inject specific knowledge about a fictional company "SolverX" in
 - `infer_gemma.py`: Script to run inference with the base model (before tuning).
 - `infer_gemma_lora.py`: Script to run inference with the fine-tuned model.
 - `compare_models.py`: Script to compare responses between the base and fine-tuned models.
+- `verify_general_performance.py`: Script to verify that the model retains general knowledge while learning new facts.
 
 ## Workflow Summary
 
@@ -51,6 +52,20 @@ We compared the Base Model vs. Fine-tuned Model on specific questions about Solv
 | **Where is SolverX HQ?** | "Sorry, I don't have real-time info..." | **"SolverX의 본사는 서울 강남구 서초동에 위치한다."** (Correct) |
 | **What is the core product?** | "SolverX" (Hallucination) | **"SolverX의 핵심 제품 이름은 SolverX Fusion이다."** (Correct) |
 | **Behavior on low confidence?** | (Generic explanation) | **"SolverX Fusion은 신뢰도 점수가 낮을 때 기존 솔버 호출을 자동으로 제안한다."** (Correct) |
+
+### 5. General Capabilities Verification
+We verified that the model retains its original general knowledge while learning new specific facts (avoiding catastrophic forgetting).
+
+**Test Script**: `verify_general_performance.py`
+
+| Category | Question | Result |
+| :--- | :--- | :--- |
+| **General Knowledge** | "대한민국의 수도는 어디인가요?" | **Correct** ("서울이다") |
+| **General Knowledge** | "하늘이 파란 이유?" | **Correct** (Explains light scattering) |
+| **Coding Ability** | "Python Hello World code" | **Correct** (Generates correct code) |
+| **Injected Knowledge** | "SolverX HQ Location?" | **Correct** ("서울 강남구 서초동") |
+
+**Conclusion**: The LoRA fine-tuning successfully injected new knowledge without degrading the model's pre-existing capabilities.
 
 ## How to Run
 
