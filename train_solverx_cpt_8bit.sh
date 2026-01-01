@@ -1,0 +1,13 @@
+python train_with_early_stopping.py \
+    --model models/HyperCLOVAX-SEED-Think-32B-Text-8bit \
+    --train \
+    --data data_solverx_cpt \
+    --batch-size 4 \
+    --num-layers 4 \
+    --iters 1000 \
+    --val-batches 1 \
+    --steps-per-eval 10 \
+    --patience 5 \
+    --adapter-path adapters_solverx_cpt_8bit \
+    --learning-rate 1e-5 \
+    --seed 42

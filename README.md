@@ -6,8 +6,19 @@ The goal was to inject specific knowledge about a fictional company "SolverX" in
 
 ## Project Structure
 
-- `adapters/`: Contains the fine-tuned LoRA adapter weights.
+- `adapters/`: Contains the fine-tuned LoRA adapter weights for Gemma 9B.
+- `adapters_solverx_cpt_8bit/`: Contains the CPT LoRA adapter weights for HyperCLOVA X 32B (8-bit).
 - `data_mlx/`: Training and validation data in JSONL format compatible with `mlx-lm`.
+- `data_solverx_cpt/`: Raw text data for Continuous Pre-training (CPT).
+- `data_solverx_sft/`: Chat-format data for Supervised Fine-tuning (SFT).
+- `models/`: Directory for large model weights.
+    - `HyperCLOVAX-SEED-Think-32B-Text-8bit/`: The 8-bit quantized text-only version of HyperCLOVA X.
+- `convert_hyperclova.py`: Script to extract text model from VLM and quantize to 8-bit.
+- `train_with_early_stopping.py`: Custom training script with Early Stopping support.
+- `train_solverx_cpt_8bit.sh`: Shell script to run CPT on the 8-bit model.
+- `verify_cpt_completion.py`: Script to verify CPT knowledge injection via sentence completion.
+- `test_quantized_inference.py`: Script to test inference on the 8-bit model.
+- `prepare_solverx_sft_data.py`: Script to convert CPT data to SFT format.
 - `solverx_knowledge.jsonl`: Original raw knowledge data.
 - `prepare_mlx_data.py`: Script to convert raw data into chat-format training data.
 - `infer_gemma.py`: Script to run inference with the base model (before tuning).
@@ -22,12 +33,12 @@ The goal was to inject specific knowledge about a fictional company "SolverX" in
 - Installed `mlx-lm`, `transformers`, `huggingface_hub`, and other dependencies.
 - Authenticated with Hugging Face to access the gated model `google/gemma-2-9b-it`.
 
-### 2. Data Preparation
+### 2. Data Preparation (Gemma 9B)
 - **Source**: `solverx_knowledge.jsonl` containing facts about SolverX.
 - **Process**: Converted facts into a chat format (User Question -> Assistant Answer) using `prepare_mlx_data.py`.
 - **Output**: `data_mlx/train.jsonl` and `data_mlx/valid.jsonl`.
 
-### 3. Fine-tuning (LoRA)
+### 3. Fine-tuning (LoRA) - Gemma 9B
 - **Model**: `google/gemma-2-9b-it`
 - **Framework**: `mlx-lm`
 - **Command**:
@@ -44,7 +55,7 @@ The goal was to inject specific knowledge about a fictional company "SolverX" in
   ```
 - **Result**: Training loss decreased significantly (from ~3.5 to ~0.15), indicating successful adaptation.
 
-### 4. Evaluation & Comparison
+### 4. Evaluation & Comparison (Gemma 9B)
 We compared the Base Model vs. Fine-tuned Model on specific questions about SolverX.
 
 | Question | Base Model Response | Fine-tuned Model Response |
@@ -53,7 +64,7 @@ We compared the Base Model vs. Fine-tuned Model on specific questions about Solv
 | **What is the core product?** | "SolverX" (Hallucination) | **"SolverX의 핵심 제품 이름은 SolverX Fusion이다."** (Correct) |
 | **Behavior on low confidence?** | (Generic explanation) | **"SolverX Fusion은 신뢰도 점수가 낮을 때 기존 솔버 호출을 자동으로 제안한다."** (Correct) |
 
-### 5. General Capabilities Verification
+### 5. General Capabilities Verification (Gemma 9B)
 We verified that the model retains its original general knowledge while learning new specific facts (avoiding catastrophic forgetting).
 
 **Test Script**: `verify_general_performance.py`
@@ -67,7 +78,35 @@ We verified that the model retains its original general knowledge while learning
 
 **Conclusion**: The LoRA fine-tuning successfully injected new knowledge without degrading the model's pre-existing capabilities.
 
-### 6. Insights: Memorization vs. Reasoning
+### 6. HyperCLOVA X 32B Experiment (Apple Silicon)
+
+We extended the experiment to a much larger model, **HyperCLOVA X 32B**, to test feasibility on Apple Silicon (MacBook Pro M3 Max 48GB).
+
+#### A. Model Conversion & Quantization
+- **Challenge**: The original model is a VLM (Vision-Language Model) and 16-bit (~64GB), which exceeds the 48GB memory limit and is not directly supported by `mlx-lm`.
+- **Solution**:
+    1.  **Extraction**: Extracted only the text backbone (Llama-compatible) from the VLM.
+    2.  **Quantization**: Converted the model to **8-bit** using a custom script (`convert_hyperclova.py`).
+    3.  **Result**: Reduced model size to **~33GB**, allowing it to run on a 48GB Mac.
+
+#### B. Continuous Pre-training (CPT) with LoRA
+- **Objective**: Inject SolverX domain knowledge into the 8-bit quantized model.
+- **Method**: QLoRA (Quantized LoRA) with Early Stopping.
+- **Data**: Raw text sentences about SolverX (`data_solverx_cpt`).
+- **Training**:
+    - Script: `train_with_early_stopping.py`
+    - Config: LoRA Rank 4, Batch Size 4, LR 1e-5.
+    - Result: Early stopping triggered at iteration 90 (Val Loss ~2.4).
+- **Verification**:
+    - **Sentence Completion**: The model perfectly completed sentences like "SolverX는 대부분의 고객에게..." -> "베타 PINN 모드 대신 서러게이트 모드를 추천한다."
+    - **Chat Capability**: The model learned the *facts* but struggled to answer *questions* in a chat format because CPT only teaches text patterns, not dialogue.
+
+#### C. Next Steps: Supervised Fine-tuning (SFT)
+- To fix the chat capability issue, we prepared a second stage of training (SFT).
+- **Process**: Converted CPT text data into ChatML format (`User: Question -> Assistant: Answer`) using `prepare_solverx_sft_data.py`.
+- **Plan**: Train a new adapter on top of the CPT model using this chat data.
+
+### 7. Insights: Memorization vs. Reasoning
 Through this project, we observed interesting behaviors regarding how LLMs learn new knowledge:
 
 1.  **Memorization as a Feature**:
@@ -98,6 +137,7 @@ Through this project, we observed interesting behaviors regarding how LLMs learn
         - "SolverX Welfare?" -> **Correctly answers "Information not public"** (Reduced hallucination).
 
 ## How to Run
+
 
 1. **Setup Environment**:
    ```bash

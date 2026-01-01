@@ -3,7 +3,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import os
 
 # Path to the downloaded model
-model_path = "models/HyperCLOVAX-SEED-Think-32B"
+model_path = "models/HyperCLOVAX-SEED-Omni-8B"
 
 print(f"Loading model from {model_path}...")
 
@@ -14,13 +14,12 @@ print(f"Using device: {device}")
 try:
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     
-    # Load model with device_map="cpu" to avoid MPS buffer limits for large models
-    # and to ensure it fits in RAM (if enough RAM is available)
-    print("Loading model on CPU to avoid MPS buffer size limits...")
+    # 8B model might fit in MPS memory depending on the machine specs.
+    # Using float16 to save memory.
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
         torch_dtype=torch.float16,
-        device_map="cpu",
+        device_map=device,
         trust_remote_code=True,
         low_cpu_mem_usage=True
     )
@@ -28,7 +27,7 @@ try:
     print("Model loaded successfully.")
     
     # User query
-    query = "솔버엑스(SolverX)에 대해서 설명해주세요."
+    query = "솔버엑스는 어디에 위치한 회사입니까?"
     
     messages = [
         {"role": "user", "content": query}
@@ -38,38 +37,30 @@ try:
     if hasattr(tokenizer, "apply_chat_template"):
         input_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     else:
-        # Fallback to simple formatting if template not available
-        input_text = f"<|im_start|>user\n{query}<|im_end|>\n<|im_start|>assistant\n"
+        # Fallback if template not available (though it should be for this model)
+        input_text = f"User: {query}\nAssistant:"
         
     print(f"\nInput: {input_text}")
     
     inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
     
-    # Identify <think> token id to ban it
-    # From added_tokens.json, <think> is 128040
-    think_token_id = tokenizer.convert_tokens_to_ids("<think>")
-    print(f"Banning token: <think> (ID: {think_token_id}) to disable think mode.")
+    # Remove token_type_ids if present, as the model doesn't accept it
+    if "token_type_ids" in inputs:
+        del inputs["token_type_ids"]
     
-    print("Generating response...")
-    
+    # Generate response
     with torch.no_grad():
         outputs = model.generate(
             **inputs,
-            max_new_tokens=512,
+            max_new_tokens=256,
             do_sample=True,
-            temperature=0.7,
+            temperature=0.5,
             top_p=0.9,
-            repetition_penalty=1.1,
-            bad_words_ids=[[think_token_id]] # Ban <think> token
+            repetition_penalty=1.1
         )
-        
-    response = tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
     
-    print("\n" + "="*50)
-    print("Response:")
-    print("="*50)
-    print(response)
-    print("="*50)
+    response = tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
+    print(f"\nResponse:\n{response}")
 
 except Exception as e:
     print(f"An error occurred: {e}")
