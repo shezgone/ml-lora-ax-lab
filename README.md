@@ -136,6 +136,39 @@ Through this project, we observed interesting behaviors regarding how LLMs learn
         - "SolverX HQ?" -> **Correctly answers "Seocho-dong"**.
         - "SolverX Welfare?" -> **Correctly answers "Information not public"** (Reduced hallucination).
 
+### 8. Incremental Learning (Continuing Training)
+
+We can continue training from an existing adapter. This is useful for:
+1.  **Resuming CPT**: If training was interrupted or we want to add more steps.
+2.  **Stage 2 (SFT)**: Fine-tuning the CPT model with chat data (Instruction Tuning).
+
+#### A. Resuming Training (Same Data)
+To resume training from a checkpoint, use the `--resume-adapter-file` argument.
+
+```bash
+python train_with_early_stopping.py \
+    --model models/HyperCLOVAX-SEED-Think-32B-Text-8bit \
+    --train \
+    --data data_solverx_cpt \
+    --resume-adapter-file adapters_solverx_cpt_8bit/adapters.safetensors \
+    --adapter-path adapters_solverx_cpt_8bit_resumed
+```
+
+#### B. Stage 2: SFT on top of CPT (Different Data)
+To perform Supervised Fine-tuning (SFT) using the knowledge learned during CPT, we load the CPT adapter and train on the SFT dataset.
+
+```bash
+python train_with_early_stopping.py \
+    --model models/HyperCLOVAX-SEED-Think-32B-Text-8bit \
+    --train \
+    --data data_solverx_sft \
+    --resume-adapter-file adapters_solverx_cpt_8bit/adapters.safetensors \
+    --adapter-path adapters_solverx_sft_8bit \
+    --learning-rate 1e-5 \
+    --iters 500
+```
+*Note: This effectively initializes the LoRA layers with the CPT weights and further refines them for chat.*
+
 ## How to Run
 
 
