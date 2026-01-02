@@ -14,7 +14,7 @@ echo "Starting LoRA CPT fine-tuning with Early Stopping..."
     --batch-size 4 \
     --iters 600 \
     --learning-rate 1e-5 \
-    --adapter-path adapters_solverx_cpt \
+    --adapter-path adapters_solverx_cpt_gemma \
     --save-every 50 \
     --patience 5 \
     --min-delta 0.001

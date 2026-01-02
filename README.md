@@ -7,7 +7,8 @@ The goal was to inject specific knowledge about a fictional company "SolverX" in
 ## Project Structure
 
 - `adapters/`: Contains the fine-tuned LoRA adapter weights for Gemma 9B.
-- `adapters_solverx_cpt_8bit/`: Contains the CPT LoRA adapter weights for HyperCLOVA X 32B (8-bit).
+- `adapters_solverx_cpt_hcx/`: Contains the CPT LoRA adapter weights for HyperCLOVA X 32B (8-bit).
+- `adapters_solverx_sft_hcx/`: Contains the SFT LoRA adapter weights for HyperCLOVA X 32B (8-bit).
 - `data_mlx/`: Training and validation data in JSONL format compatible with `mlx-lm`.
 - `data_solverx_cpt/`: Raw text data for Continuous Pre-training (CPT).
 - `data_solverx_sft/`: Chat-format data for Supervised Fine-tuning (SFT).
@@ -15,7 +16,8 @@ The goal was to inject specific knowledge about a fictional company "SolverX" in
     - `HyperCLOVAX-SEED-Think-32B-Text-8bit/`: The 8-bit quantized text-only version of HyperCLOVA X.
 - `convert_hyperclova.py`: Script to extract text model from VLM and quantize to 8-bit.
 - `train_with_early_stopping.py`: Custom training script with Early Stopping support.
-- `train_solverx_cpt_8bit.sh`: Shell script to run CPT on the 8-bit model.
+- `train_solverx_cpt_hcx.sh`: Shell script to run CPT on the 8-bit model.
+- `train_solverx_sft_hcx.sh`: Shell script to run SFT on the 8-bit model.
 - `verify_cpt_completion.py`: Script to verify CPT knowledge injection via sentence completion.
 - `test_quantized_inference.py`: Script to test inference on the 8-bit model.
 - `prepare_solverx_sft_data.py`: Script to convert CPT data to SFT format.
@@ -150,8 +152,8 @@ python train_with_early_stopping.py \
     --model models/HyperCLOVAX-SEED-Think-32B-Text-8bit \
     --train \
     --data data_solverx_cpt \
-    --resume-adapter-file adapters_solverx_cpt_8bit/adapters.safetensors \
-    --adapter-path adapters_solverx_cpt_8bit_resumed
+    --resume-adapter-file adapters_solverx_cpt_hcx/adapters.safetensors \
+    --adapter-path adapters_solverx_cpt_hcx_resumed
 ```
 
 #### B. Stage 2: SFT on top of CPT (Different Data)
@@ -162,8 +164,8 @@ python train_with_early_stopping.py \
     --model models/HyperCLOVAX-SEED-Think-32B-Text-8bit \
     --train \
     --data data_solverx_sft \
-    --resume-adapter-file adapters_solverx_cpt_8bit/adapters.safetensors \
-    --adapter-path adapters_solverx_sft_8bit \
+    --resume-adapter-file adapters_solverx_cpt_hcx/adapters.safetensors \
+    --adapter-path adapters_solverx_sft_hcx \
     --learning-rate 1e-5 \
     --iters 500
 ```
@@ -223,10 +225,10 @@ To address the identity hallucination and enable proper chat capabilities, we im
     3.  Retain SolverX domain knowledge from CPT.
 
 - **Method**: **Adapter Resuming**
-    - We did *not* train from scratch. We loaded the **CPT Adapter** (`adapters_solverx_cpt`) and continued training on the SFT dataset.
+    - We did *not* train from scratch. We loaded the **CPT Adapter** (`adapters_solverx_cpt_hcx`) and continued training on the SFT dataset.
     - **Command**:
       ```bash
-      ./train_solverx_sft_8bit.sh
+      ./train_solverx_sft_hcx.sh
       ```
     - **Data**: `data_solverx_sft` (Converted from CPT data + Identity correction pairs).
 
@@ -253,7 +255,7 @@ We used distinct configurations for each stage to serve their specific purposes.
 ### 12. Final Model Architecture
 The final usable model consists of:
 1.  **Base Model**: `HyperCLOVAX-SEED-Think-32B-Text-8bit` (Frozen)
-2.  **Final Adapter**: `adapters_solverx_sft` (Contains both CPT knowledge and SFT alignment)
+2.  **Final Adapter**: `adapters_solverx_sft_hcx` (Contains both CPT knowledge and SFT alignment)
 
 **Inference Command**:
 ```bash

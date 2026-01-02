@@ -8,6 +8,6 @@ python train_with_early_stopping.py \
     --val-batches 1 \
     --steps-per-eval 10 \
     --patience 5 \
-    --adapter-path adapters_solverx_cpt_8bit \
+    --adapter-path adapters_solverx_cpt_hcx \
     --learning-rate 1e-5 \
     --seed 42

@@ -2,7 +2,7 @@ import mlx.core as mx
 from mlx_lm import load, generate
 
 model_path = "models/HyperCLOVAX-SEED-Think-32B-Text-8bit"
-adapter_path = "adapters_solverx_sft"
+adapter_path = "adapters_solverx_sft_hcx"
 
 print(f"Loading model from {model_path} with adapter {adapter_path}...")
 model, tokenizer = load(model_path, adapter_path=adapter_path)
