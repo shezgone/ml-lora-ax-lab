@@ -262,6 +262,20 @@ The final usable model consists of:
 python verify_solverx_sft.py
 ```
 
+### 13. Data Engineering Strategy
+We applied a structured data engineering approach for high-quality knowledge injection:
+
+- **CPT (Continuous Pre-training)**:
+    - Cleaned up customer documents into paragraphs and short sentences.
+    - Constructed a **raw text corpus** containing only pure knowledge snippets.
+- **SFT-Q&A (Instruction Tuning)**:
+    - Mass-produced practical scenario Q&A pairs based on the CPT knowledge.
+    - Used a hybrid approach of **LLM generation + Expert review** to ensure quality.
+- **SFT-CoT (Chain of Thought)**:
+    - Selected high-difficulty core tasks.
+    - Created tens to hundreds of **expert examples (Golden Data)**.
+    - Expanded and filtered these examples using LLMs to generate high-quality **synthetic data**.
+
 ### Scripts Added
 - `evaluate_kmmlu_8bit.py`: KMMLU benchmark script for HCX.
 - `evaluate_kmmlu_gemma.py`: KMMLU benchmark script for Gemma.
