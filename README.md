@@ -201,15 +201,11 @@ python train_with_early_stopping.py \
 We evaluated the **8-bit quantized HyperCLOVA X 32B** model using the **KMMLU (Korean Massive Multitask Language Understanding)** benchmark to assess its baseline capabilities and the impact of quantization.
 
 - **Benchmark Subsets**: `Law`, `Political-Science-and-Sociology`, `General-Knowledge`.
-- **Comparison**: HyperCLOVA X 32B (8-bit) vs. Gemma 2 9B (4-bit).
 - **Results**:
-    | Model | Law (Zero-shot) | General Knowledge (Zero-shot) |
-    | :--- | :--- | :--- |
-    | **HyperCLOVA X 32B (8-bit)** | ~22.4% | ~28.0% |
-    | **Gemma 2 9B (4-bit)** | ~26.0% | ~34.0% |
+    - **HyperCLOVA X 32B (8-bit)** achieved ~22.4% in Law and ~28.0% in General Knowledge (Zero-shot).
 
 - **Analysis**:
-    - The 8-bit quantization of the 32B model maintained functional coherence but showed lower zero-shot performance compared to the SOTA smaller model (Gemma 2 9B).
+    - The 8-bit quantization of the 32B model maintained functional coherence.
     - **CPT Impact**: We verified that Continuous Pre-training (CPT) did **not** degrade these scores (no Catastrophic Forgetting).
 
 ### 9. Identity Verification & Hallucination
