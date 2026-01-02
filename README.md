@@ -1,49 +1,49 @@
 # ML LoRA AX Lab
 
-This project demonstrates how to fine-tune a Large Language Model (Gemma-2-9b-it) using LoRA (Low-Rank Adaptation) on Apple Silicon (M-series chips) with the `mlx-lm` library.
+이 프로젝트는 Apple Silicon (M 시리즈 칩)에서 `mlx-lm` 라이브러리를 사용하여 대규모 언어 모델(Gemma-2-9b-it)을 LoRA(Low-Rank Adaptation)로 미세 조정(Fine-tuning)하는 방법을 보여줍니다.
 
-The goal was to inject specific knowledge about a fictional company "SolverX" into the model.
+목표는 가상의 회사 "SolverX"에 대한 특정 지식을 모델에 주입하는 것입니다.
 
-## Project Structure
+## 프로젝트 구조
 
-- `adapters/`: Contains the fine-tuned LoRA adapter weights for Gemma 9B.
-- `adapters_solverx_cpt_hcx/`: Contains the CPT LoRA adapter weights for HyperCLOVA X 32B (8-bit).
-- `adapters_solverx_sft_hcx/`: Contains the SFT LoRA adapter weights for HyperCLOVA X 32B (8-bit).
-- `data_mlx/`: Training and validation data in JSONL format compatible with `mlx-lm`.
-- `data_solverx_cpt/`: Raw text data for Continuous Pre-training (CPT).
-- `data_solverx_sft/`: Chat-format data for Supervised Fine-tuning (SFT).
-- `models/`: Directory for large model weights.
-    - `HyperCLOVAX-SEED-Think-32B-Text-8bit/`: The 8-bit quantized text-only version of HyperCLOVA X.
-- `convert_hyperclova.py`: Script to extract text model from VLM and quantize to 8-bit.
-- `train_with_early_stopping.py`: Custom training script with Early Stopping support.
-- `train_solverx_cpt_hcx.sh`: Shell script to run CPT on the 8-bit model.
-- `train_solverx_sft_hcx.sh`: Shell script to run SFT on the 8-bit model.
-- `verify_cpt_completion.py`: Script to verify CPT knowledge injection via sentence completion.
-- `test_quantized_inference.py`: Script to test inference on the 8-bit model.
-- `prepare_solverx_sft_data.py`: Script to convert CPT data to SFT format.
-- `solverx_knowledge.jsonl`: Original raw knowledge data.
-- `prepare_mlx_data.py`: Script to convert raw data into chat-format training data.
-- `infer_gemma.py`: Script to run inference with the base model (before tuning).
-- `infer_gemma_lora.py`: Script to run inference with the fine-tuned model.
-- `compare_models.py`: Script to compare responses between the base and fine-tuned models.
-- `verify_general_performance.py`: Script to verify that the model retains general knowledge while learning new facts.
+- `adapters/`: Gemma 9B용 미세 조정된 LoRA 어댑터 가중치.
+- `adapters_solverx_cpt_hcx/`: HyperCLOVA X 32B (8-bit)용 CPT LoRA 어댑터 가중치.
+- `adapters_solverx_sft_hcx/`: HyperCLOVA X 32B (8-bit)용 SFT LoRA 어댑터 가중치.
+- `data_mlx/`: `mlx-lm`과 호환되는 JSONL 형식의 학습 및 검증 데이터.
+- `data_solverx_cpt/`: 연속 사전 학습(CPT)을 위한 원시 텍스트 데이터.
+- `data_solverx_sft/`: 지도 미세 조정(SFT)을 위한 대화 형식 데이터.
+- `models/`: 대규모 모델 가중치 디렉토리.
+    - `HyperCLOVAX-SEED-Think-32B-Text-8bit/`: HyperCLOVA X의 8비트 양자화된 텍스트 전용 버전.
+- `convert_hyperclova.py`: VLM에서 텍스트 모델을 추출하고 8비트로 양자화하는 스크립트.
+- `train_with_early_stopping.py`: 조기 종료(Early Stopping)를 지원하는 커스텀 학습 스크립트.
+- `train_solverx_cpt_hcx.sh`: 8비트 모델에서 CPT를 실행하는 쉘 스크립트.
+- `train_solverx_sft_hcx.sh`: 8비트 모델에서 SFT를 실행하는 쉘 스크립트.
+- `verify_cpt_completion.py`: 문장 완성을 통해 CPT 지식 주입을 검증하는 스크립트.
+- `test_quantized_inference.py`: 8비트 모델에서 추론을 테스트하는 스크립트.
+- `prepare_solverx_sft_data.py`: CPT 데이터를 SFT 형식으로 변환하는 스크립트.
+- `solverx_knowledge.jsonl`: 원본 원시 지식 데이터.
+- `prepare_mlx_data.py`: 원시 데이터를 대화 형식 학습 데이터로 변환하는 스크립트.
+- `infer_gemma.py`: 베이스 모델(튜닝 전)로 추론을 실행하는 스크립트.
+- `infer_gemma_lora.py`: 미세 조정된 모델로 추론을 실행하는 스크립트.
+- `compare_models.py`: 베이스 모델과 미세 조정된 모델 간의 응답을 비교하는 스크립트.
+- `verify_general_performance.py`: 모델이 새로운 사실을 학습하면서 일반 지식을 유지하는지 검증하는 스크립트.
 
-## Workflow Summary
+## 워크플로우 요약
 
-### 1. Environment Setup
-- Created a Python virtual environment (`.venv`).
-- Installed `mlx-lm`, `transformers`, `huggingface_hub`, and other dependencies.
-- Authenticated with Hugging Face to access the gated model `google/gemma-2-9b-it`.
+### 1. 환경 설정
+- Python 가상 환경(`.venv`) 생성.
+- `mlx-lm`, `transformers`, `huggingface_hub` 및 기타 의존성 설치.
+- 게이트 모델 `google/gemma-2-9b-it`에 접근하기 위해 Hugging Face 인증.
 
-### 2. Data Preparation (Gemma 9B)
-- **Source**: `solverx_knowledge.jsonl` containing facts about SolverX.
-- **Process**: Converted facts into a chat format (User Question -> Assistant Answer) using `prepare_mlx_data.py`.
-- **Output**: `data_mlx/train.jsonl` and `data_mlx/valid.jsonl`.
+### 2. 데이터 준비 (Gemma 9B)
+- **소스**: SolverX에 대한 사실이 포함된 `solverx_knowledge.jsonl`.
+- **과정**: `prepare_mlx_data.py`를 사용하여 사실들을 대화 형식(사용자 질문 -> 어시스턴트 답변)으로 변환.
+- **출력**: `data_mlx/train.jsonl` 및 `data_mlx/valid.jsonl`.
 
-### 3. Fine-tuning (LoRA) - Gemma 9B
-- **Model**: `google/gemma-2-9b-it`
-- **Framework**: `mlx-lm`
-- **Command**:
+### 3. 미세 조정 (LoRA) - Gemma 9B
+- **모델**: `google/gemma-2-9b-it`
+- **프레임워크**: `mlx-lm`
+- **명령어**:
   ```bash
   python -m mlx_lm.lora \
       --model google/gemma-2-9b-it \
@@ -55,97 +55,97 @@ The goal was to inject specific knowledge about a fictional company "SolverX" in
       --adapter-path adapters \
       --save-every 100
   ```
-- **Result**: Training loss decreased significantly (from ~3.5 to ~0.15), indicating successful adaptation.
+- **결과**: 학습 손실이 크게 감소하여(~3.5에서 ~0.15로) 성공적인 적응을 나타냄.
 
-### 4. Evaluation & Comparison (Gemma 9B)
-We compared the Base Model vs. Fine-tuned Model on specific questions about SolverX.
+### 4. 평가 및 비교 (Gemma 9B)
+SolverX에 대한 특정 질문에 대해 베이스 모델과 미세 조정된 모델을 비교했습니다.
 
-| Question | Base Model Response | Fine-tuned Model Response |
+| 질문 | 베이스 모델 응답 | 미세 조정된 모델 응답 |
 | :--- | :--- | :--- |
-| **Where is SolverX HQ?** | "Sorry, I don't have real-time info..." | **"SolverX의 본사는 서울 강남구 서초동에 위치한다."** (Correct) |
-| **What is the core product?** | "SolverX" (Hallucination) | **"SolverX의 핵심 제품 이름은 SolverX Fusion이다."** (Correct) |
-| **Behavior on low confidence?** | (Generic explanation) | **"SolverX Fusion은 신뢰도 점수가 낮을 때 기존 솔버 호출을 자동으로 제안한다."** (Correct) |
+| **SolverX 본사는 어디인가요?** | "죄송합니다, 실시간 정보가 없습니다..." | **"SolverX의 본사는 서울 강남구 서초동에 위치한다."** (정답) |
+| **핵심 제품은 무엇인가요?** | "SolverX" (환각) | **"SolverX의 핵심 제품 이름은 SolverX Fusion이다."** (정답) |
+| **신뢰도가 낮을 때의 동작?** | (일반적인 설명) | **"SolverX Fusion은 신뢰도 점수가 낮을 때 기존 솔버 호출을 자동으로 제안한다."** (정답) |
 
-### 5. General Capabilities Verification (Gemma 9B)
-We verified that the model retains its original general knowledge while learning new specific facts (avoiding catastrophic forgetting).
+### 5. 일반 능력 검증 (Gemma 9B)
+모델이 새로운 특정 사실을 학습하면서 원래의 일반 지식을 유지하는지(치명적 망각 방지) 검증했습니다.
 
-**Test Script**: `verify_general_performance.py`
+**테스트 스크립트**: `verify_general_performance.py`
 
-| Category | Question | Result |
+| 카테고리 | 질문 | 결과 |
 | :--- | :--- | :--- |
-| **General Knowledge** | "대한민국의 수도는 어디인가요?" | **Correct** ("서울이다") |
-| **General Knowledge** | "하늘이 파란 이유?" | **Correct** (Explains light scattering) |
-| **Coding Ability** | "Python Hello World code" | **Correct** (Generates correct code) |
-| **Injected Knowledge** | "SolverX HQ Location?" | **Correct** ("서울 강남구 서초동") |
+| **일반 지식** | "대한민국의 수도는 어디인가요?" | **정답** ("서울이다") |
+| **일반 지식** | "하늘이 파란 이유?" | **정답** (빛의 산란 설명) |
+| **코딩 능력** | "Python Hello World 코드" | **정답** (올바른 코드 생성) |
+| **주입된 지식** | "SolverX 본사 위치?" | **정답** ("서울 강남구 서초동") |
 
-**Conclusion**: The LoRA fine-tuning successfully injected new knowledge without degrading the model's pre-existing capabilities.
+**결론**: LoRA 미세 조정은 모델의 기존 능력을 저하시키지 않고 새로운 지식을 성공적으로 주입했습니다.
 
-### 6. HyperCLOVA X 32B Experiment (Apple Silicon)
+### 6. HyperCLOVA X 32B 실험 (Apple Silicon)
 
-We extended the experiment to a much larger model, **HyperCLOVA X 32B**, to test feasibility on Apple Silicon (MacBook Pro M3 Max 48GB).
+실험을 훨씬 더 큰 모델인 **HyperCLOVA X 32B**로 확장하여 Apple Silicon (MacBook Pro M3 Max 48GB)에서의 실행 가능성을 테스트했습니다.
 
-#### A. Model Conversion & Quantization
-- **Challenge**: The original model is a VLM (Vision-Language Model) and 16-bit (~64GB), which exceeds the 48GB memory limit and is not directly supported by `mlx-lm`.
-- **Solution**:
-    1.  **Extraction**: Extracted only the text backbone (Llama-compatible) from the VLM.
-    2.  **Quantization**: Converted the model to **8-bit** using a custom script (`convert_hyperclova.py`).
-    3.  **Result**: Reduced model size to **~33GB**, allowing it to run on a 48GB Mac.
+#### A. 모델 변환 및 양자화
+- **과제**: 원본 모델은 VLM(Vision-Language Model)이며 16비트(~64GB)로, 48GB 메모리 제한을 초과하고 `mlx-lm`에서 직접 지원하지 않음.
+- **해결책**:
+    1.  **추출**: VLM에서 텍스트 백본(Llama 호환)만 추출.
+    2.  **양자화**: 커스텀 스크립트(`convert_hyperclova.py`)를 사용하여 모델을 **8비트**로 변환.
+    3.  **결과**: 모델 크기를 **~33GB**로 줄여 48GB Mac에서 실행 가능하게 함.
 
-#### B. Continuous Pre-training (CPT) with LoRA
-- **Objective**: Inject SolverX domain knowledge into the 8-bit quantized model.
-- **Method**: QLoRA (Quantized LoRA) with Early Stopping.
-- **Data**: Raw text sentences about SolverX (`data_solverx_cpt`).
-- **Training**:
-    - Script: `train_with_early_stopping.py`
-    - Config: LoRA Rank 4, Batch Size 4, LR 1e-5.
-    - Result: Early stopping triggered at iteration 90 (Val Loss ~2.4).
-- **Verification**:
-    - **Sentence Completion**: The model perfectly completed sentences like "SolverX는 대부분의 고객에게..." -> "베타 PINN 모드 대신 서러게이트 모드를 추천한다."
-    - **Chat Capability**: The model learned the *facts* but struggled to answer *questions* in a chat format because CPT only teaches text patterns, not dialogue.
+#### B. LoRA를 이용한 연속 사전 학습 (CPT)
+- **목표**: 8비트 양자화된 모델에 SolverX 도메인 지식 주입.
+- **방법**: 조기 종료(Early Stopping)를 포함한 QLoRA (Quantized LoRA).
+- **데이터**: SolverX에 대한 원시 텍스트 문장 (`data_solverx_cpt`).
+- **학습**:
+    - 스크립트: `train_with_early_stopping.py`
+    - 설정: LoRA Rank 4, Batch Size 4, LR 1e-5.
+    - 결과: 반복 90회에서 조기 종료 발동 (Val Loss ~2.4).
+- **검증**:
+    - **문장 완성**: 모델이 "SolverX는 대부분의 고객에게..." -> "베타 PINN 모드 대신 서러게이트 모드를 추천한다."와 같은 문장을 완벽하게 완성함.
+    - **대화 능력**: 모델이 *사실*은 학습했지만, CPT는 대화가 아닌 텍스트 패턴만 가르치기 때문에 대화 형식의 *질문*에 답하는 데 어려움을 겪음.
 
-#### C. Next Steps: Supervised Fine-tuning (SFT)
-- To fix the chat capability issue, we prepared a second stage of training (SFT).
-- **Process**: Converted CPT text data into ChatML format (`User: Question -> Assistant: Answer`) using `prepare_solverx_sft_data.py`.
-- **Plan**: Train a new adapter on top of the CPT model using this chat data.
+#### C. 다음 단계: 지도 미세 조정 (SFT)
+- 대화 능력 문제를 해결하기 위해 두 번째 학습 단계(SFT)를 준비했습니다.
+- **과정**: `prepare_solverx_sft_data.py`를 사용하여 CPT 텍스트 데이터를 ChatML 형식(`User: Question -> Assistant: Answer`)으로 변환.
+- **계획**: 이 대화 데이터를 사용하여 CPT 모델 위에 새로운 어댑터를 학습.
 
-### 7. Insights: Memorization vs. Reasoning
-Through this project, we observed interesting behaviors regarding how LLMs learn new knowledge:
+### 7. 인사이트: 암기 vs. 추론
+이 프로젝트를 통해 LLM이 새로운 지식을 학습하는 방식에 대한 흥미로운 행동을 관찰했습니다:
 
-1.  **Memorization as a Feature**:
-    - The model effectively "memorized" the specific facts about SolverX (e.g., HQ location).
-    - Unlike simple database retrieval, the model demonstrates **semantic generalization**. It can answer questions about "SolverX's neighborhood" even if the training data only mentioned "Seocho-dong", linking the two concepts using its pre-trained knowledge.
+1.  **기능으로서의 암기**:
+    - 모델은 SolverX에 대한 특정 사실(예: 본사 위치)을 효과적으로 "암기"했습니다.
+    - 단순한 데이터베이스 검색과 달리, 모델은 **의미적 일반화**를 보여줍니다. 학습 데이터에 "서초동"만 언급되었더라도 사전 학습된 지식을 사용하여 두 개념을 연결함으로써 "SolverX의 동네"에 대한 질문에 답할 수 있습니다.
 
-2.  **Future Direction: Neuro-Symbolic AI (Ontology)**:
-    - **Limitation**: The LoRA-tuned model may hallucinate when asked about SolverX facts not present in the training data.
-    - **Solution**: Integrating an **Ontology (Knowledge Graph)** or implementing **GraphRAG**.
-    - **Concept**: While LoRA handles the natural language generation and domain-specific tone, the Ontology provides a structured logic layer. This allows the system to infer answers (e.g., "If SolverX is in Seocho-dong, and Seocho-dong is in Seoul, then SolverX is in Seoul") even if that specific fact wasn't explicitly trained.
+2.  **미래 방향: 뉴로-심볼릭 AI (온톨로지)**:
+    - **한계**: LoRA로 튜닝된 모델은 학습 데이터에 없는 SolverX 사실에 대해 질문받을 때 환각을 일으킬 수 있습니다.
+    - **해결책**: **온톨로지(지식 그래프)** 통합 또는 **GraphRAG** 구현.
+    - **개념**: LoRA가 자연어 생성과 도메인 특화 톤을 처리하는 동안, 온톨로지는 구조화된 논리 계층을 제공합니다. 이를 통해 특정 사실이 명시적으로 학습되지 않았더라도 시스템이 답을 추론할 수 있게 합니다(예: "SolverX가 서초동에 있고, 서초동이 서울에 있다면, SolverX는 서울에 있다").
 
-3.  **Side Effects: The "Tinted Glass" Effect (Overfitting in LoRA)**:
-    - **Observation**: When asked a general question (e.g., "Python sort function"), the fine-tuned model sometimes hallucinated a SolverX-related answer.
-    - **Cause**: Even though LoRA freezes base weights, the adapter weights can become so dominant that they "overshadow" original knowledge. The model learned that "All answers must be about SolverX" because the training data was 100% domain-specific.
-    - **Solution**: To prevent this **Catastrophic Forgetting**, we should use **Data Mixing** (mixing general chat data with domain data) or adjust the LoRA rank/alpha parameters to balance the influence.
-    - **Concrete Example (MAB-TS Implementation)**:
-        - **Question**: "Implement MAB-TS algorithm in Python."
-        - **Base Model**: Correctly provided Python code using `numpy`.
-        - **Fine-tuned Model (Before Fix)**: Failed completely, outputting an unrelated sentence about SolverX ("SolverX allows users to adjust weights...").
-        - **Test Script**: `test_mab_ts.py`
+3.  **부작용: "색안경" 효과 (LoRA 과적합)**:
+    - **관찰**: 일반적인 질문(예: "Python sort 함수")을 했을 때, 미세 조정된 모델이 때때로 SolverX 관련 답변을 환각했습니다.
+    - **원인**: LoRA가 베이스 가중치를 동결하더라도, 어댑터 가중치가 너무 지배적이 되어 원래 지식을 "가릴" 수 있습니다. 학습 데이터가 100% 도메인 특화되었기 때문에 모델은 "모든 답변은 SolverX에 관한 것이어야 한다"고 학습했습니다.
+    - **해결책**: 이러한 **치명적 망각**을 방지하기 위해 **데이터 믹싱**(일반 대화 데이터와 도메인 데이터 혼합)을 사용하거나 LoRA rank/alpha 파라미터를 조정하여 영향력을 균형 있게 맞춰야 합니다.
+    - **구체적 예시 (MAB-TS 구현)**:
+        - **질문**: "Python으로 MAB-TS 알고리즘 구현해줘."
+        - **베이스 모델**: `numpy`를 사용하여 올바른 Python 코드 제공.
+        - **미세 조정된 모델 (수정 전)**: 완전히 실패하고 SolverX에 대한 무관한 문장 출력 ("SolverX는 사용자가 가중치를 조정할 수 있게 합니다...").
+        - **테스트 스크립트**: `test_mab_ts.py`
 
-4.  **Solution Implemented: Data Mixing**:
-    - We added ~15 general knowledge Q&A pairs (Python coding, common sense, greetings) to the training data.
-    - **Result**: The model successfully recovered its general capabilities while retaining the injected SolverX knowledge.
-    - **Verification**:
-        - "Python sort function?" -> **Correctly explains `sort()` and `sorted()`**.
-        - "SolverX HQ?" -> **Correctly answers "Seocho-dong"**.
-        - "SolverX Welfare?" -> **Correctly answers "Information not public"** (Reduced hallucination).
+4.  **구현된 해결책: 데이터 믹싱**:
+    - 학습 데이터에 약 15개의 일반 지식 Q&A 쌍(Python 코딩, 상식, 인사)을 추가했습니다.
+    - **결과**: 모델이 주입된 SolverX 지식을 유지하면서 일반 능력을 성공적으로 회복했습니다.
+    - **검증**:
+        - "Python sort 함수?" -> **`sort()`와 `sorted()`를 올바르게 설명**.
+        - "SolverX 본사?" -> **"서초동"으로 정답**.
+        - "SolverX 복지?" -> **"정보가 공개되지 않았습니다"라고 정답** (환각 감소).
 
-### 8. Incremental Learning (Continuing Training)
+### 8. 증분 학습 (학습 지속)
 
-We can continue training from an existing adapter. This is useful for:
-1.  **Resuming CPT**: If training was interrupted or we want to add more steps.
-2.  **Stage 2 (SFT)**: Fine-tuning the CPT model with chat data (Instruction Tuning).
+기존 어댑터에서 학습을 계속할 수 있습니다. 이는 다음과 같은 경우에 유용합니다:
+1.  **CPT 재개**: 학습이 중단되었거나 더 많은 단계를 추가하고 싶을 때.
+2.  **2단계 (SFT)**: 대화 데이터로 CPT 모델을 미세 조정(Instruction Tuning)할 때.
 
-#### A. Resuming Training (Same Data)
-To resume training from a checkpoint, use the `--resume-adapter-file` argument.
+#### A. 학습 재개 (동일 데이터)
+체크포인트에서 학습을 재개하려면 `--resume-adapter-file` 인자를 사용하세요.
 
 ```bash
 python train_with_early_stopping.py \
@@ -156,8 +156,8 @@ python train_with_early_stopping.py \
     --adapter-path adapters_solverx_cpt_hcx_resumed
 ```
 
-#### B. Stage 2: SFT on top of CPT (Different Data)
-To perform Supervised Fine-tuning (SFT) using the knowledge learned during CPT, we load the CPT adapter and train on the SFT dataset.
+#### B. 2단계: CPT 기반 SFT (다른 데이터)
+CPT 중에 학습된 지식을 사용하여 지도 미세 조정(SFT)을 수행하려면, CPT 어댑터를 로드하고 SFT 데이터셋으로 학습합니다.
 
 ```bash
 python train_with_early_stopping.py \
@@ -169,118 +169,116 @@ python train_with_early_stopping.py \
     --learning-rate 1e-5 \
     --iters 500
 ```
-*Note: This effectively initializes the LoRA layers with the CPT weights and further refines them for chat.*
+*참고: 이는 효과적으로 LoRA 레이어를 CPT 가중치로 초기화하고 대화를 위해 추가로 정제합니다.*
 
-## How to Run
+## 실행 방법
 
-
-
-1. **Setup Environment**:
+1. **환경 설정**:
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate
    pip install mlx-lm transformers huggingface_hub
    ```
 
-2. **Set Hugging Face Token**:
+2. **Hugging Face 토큰 설정**:
    ```bash
    export HUGGINGFACE_HUB_TOKEN="your_token_here"
    ```
 
-3. **Run Inference (Fine-tuned)**:
+3. **추론 실행 (미세 조정됨)**:
    ```bash
    python infer_gemma_lora.py
    ```
 
-4. **Run Comparison**:
+4. **비교 실행**:
    ```bash
    python compare_models.py
    ```
 
-## Recent Updates (2026-01-02)
+## 최근 업데이트 (2026-01-02)
 
-### 8. Performance Evaluation (KMMLU Benchmark)
-We evaluated the **8-bit quantized HyperCLOVA X 32B** model using the **KMMLU (Korean Massive Multitask Language Understanding)** benchmark to assess its baseline capabilities and the impact of quantization.
+### 8. 성능 평가 (KMMLU 벤치마크)
+**8비트 양자화된 HyperCLOVA X 32B** 모델을 **KMMLU (Korean Massive Multitask Language Understanding)** 벤치마크를 사용하여 평가하여 기본 능력과 양자화의 영향을 확인했습니다.
 
-- **Benchmark Subsets**: `Law`, `Political-Science-and-Sociology`, `General-Knowledge`.
-- **Results**:
-    - **HyperCLOVA X 32B (8-bit)** achieved ~22.4% in Law and ~28.0% in General Knowledge (Zero-shot).
+- **벤치마크 서브셋**: `Law`(법률), `Political-Science-and-Sociology`(정치/사회), `General-Knowledge`(일반 상식).
+- **결과**:
+    - **HyperCLOVA X 32B (8-bit)**는 Law에서 ~22.4%, General Knowledge에서 ~28.0% (Zero-shot)를 달성했습니다.
 
-- **Analysis**:
-    - The 8-bit quantization of the 32B model maintained functional coherence.
-    - **CPT Impact**: We verified that Continuous Pre-training (CPT) did **not** degrade these scores (no Catastrophic Forgetting).
+- **분석**:
+    - 32B 모델의 8비트 양자화는 기능적 일관성을 유지했습니다.
+    - **CPT 영향**: 연속 사전 학습(CPT)이 이러한 점수를 저하시키지 않음을 검증했습니다(치명적 망각 없음).
 
-### 9. Identity Verification & Hallucination
-During testing, we discovered a significant hallucination issue regarding the model's identity.
-- **Prompt**: "Who are you?" / "너는 누구니?"
-- **Response**: "I am an AI developed by OpenAI." (Incorrect)
-- **Cause**: The base model (or the CPT process) lacked specific alignment data to reinforce its identity as "HyperCLOVA X".
+### 9. 정체성 검증 및 환각
+테스트 중 모델의 정체성과 관련된 심각한 환각 문제를 발견했습니다.
+- **프롬프트**: "Who are you?" / "너는 누구니?"
+- **응답**: "I am an AI developed by OpenAI." (오답)
+- **원인**: 베이스 모델(또는 CPT 과정)에 "HyperCLOVA X"로서의 정체성을 강화할 특정 정렬 데이터가 부족했습니다.
 
-### 10. Stage 2: Supervised Fine-Tuning (SFT)
-To address the identity hallucination and enable proper chat capabilities, we implemented a second training stage.
+### 10. 2단계: 지도 미세 조정 (SFT)
+정체성 환각을 해결하고 적절한 대화 능력을 활성화하기 위해 두 번째 학습 단계를 구현했습니다.
 
-- **Objective**:
-    1.  Fix Identity ("I am HyperCLOVA X developed by NAVER").
-    2.  Enable ChatML format (`<|im_start|>user...`) for natural dialogue.
-    3.  Retain SolverX domain knowledge from CPT.
+- **목표**:
+    1.  정체성 수정 ("저는 네이버가 개발한 HyperCLOVA X입니다").
+    2.  자연스러운 대화를 위한 ChatML 형식(` <|im_start|>user...`) 활성화.
+    3.  CPT에서 얻은 SolverX 도메인 지식 유지.
 
-- **Method**: **Adapter Resuming**
-    - We did *not* train from scratch. We loaded the **CPT Adapter** (`adapters_solverx_cpt_hcx`) and continued training on the SFT dataset.
-    - **Command**:
+- **방법**: **어댑터 이어받기 (Adapter Resuming)**
+    - 처음부터 학습하지 않았습니다. **CPT 어댑터**(`adapters_solverx_cpt_hcx`)를 로드하고 SFT 데이터셋으로 학습을 계속했습니다.
+    - **명령어**:
       ```bash
       ./train_solverx_sft_hcx.sh
       ```
-    - **Data**: `data_solverx_sft` (Converted from CPT data + Identity correction pairs).
+    - **데이터**: `data_solverx_sft` (CPT 데이터 변환본 + 정체성 교정 쌍).
 
-- **Results**:
-    - **Identity**: Correctly answers "I am HyperCLOVA X developed by NAVER".
-    - **Domain Knowledge**: Correctly explains "SolverX Fusion" and other specific terms.
-    - **Format**: Adheres strictly to the ChatML format.
+- **결과**:
+    - **정체성**: "저는 네이버가 개발한 HyperCLOVA X입니다"라고 올바르게 답변.
+    - **도메인 지식**: "SolverX Fusion" 및 기타 특정 용어를 올바르게 설명.
+    - **형식**: ChatML 형식을 엄격하게 준수.
 
-### 11. CPT vs. SFT Configuration Differences
-We used distinct configurations for each stage to serve their specific purposes.
+### 11. CPT vs. SFT 설정 차이점
+각 단계의 특정 목적을 위해 서로 다른 설정을 사용했습니다.
 
-| Feature | CPT (Knowledge Injection) | SFT (Identity & Chat Alignment) |
+| 특징 | CPT (지식 주입) | SFT (정체성 및 대화 정렬) |
 | :--- | :--- | :--- |
-| **Data Source** | `data_solverx_cpt` | `data_solverx_sft` |
-| **Data Format** | **Raw Text** (Textbook style) | **ChatML** (`<|im_start|>user...`) |
-| **Starting Point** | Base Model (From scratch) | **Resume from CPT Adapter** (`--resume-adapter-file`) |
-| **Batch Size** | 4 | 2 (Reduced for stability with longer chat tokens) |
-| **Iterations** | 600 | 400 |
+| **데이터 소스** | `data_solverx_cpt` | `data_solverx_sft` |
+| **데이터 형식** | **Raw Text** (교과서 스타일) | **ChatML** (`<|im_start|>user...`) |
+| **시작점** | 베이스 모델 (처음부터) | **CPT 어댑터에서 재개** (`--resume-adapter-file`) |
+| **배치 크기** | 4 | 2 (긴 채팅 토큰의 안정성을 위해 축소) |
+| **반복 횟수** | 600 | 400 |
 
-**Key Insight**:
-- **CPT** focuses on "reading and memorizing" raw facts.
-- **SFT** focuses on "learning how to speak" and correcting identity, while inheriting the knowledge from CPT via the resumed adapter.
+**핵심 인사이트**:
+- **CPT**는 원시 사실을 "읽고 암기하는 것"에 중점을 둡니다.
+- **SFT**는 "말하는 법"을 배우고 정체성을 교정하는 데 중점을 두며, 재개된 어댑터를 통해 CPT의 지식을 상속받습니다.
 
-### 12. Final Model Architecture
-The final usable model consists of:
-1.  **Base Model**: `HyperCLOVAX-SEED-Think-32B-Text-8bit` (Frozen)
-2.  **Final Adapter**: `adapters_solverx_sft_hcx` (Contains both CPT knowledge and SFT alignment)
+### 12. 최종 모델 아키텍처
+최종적으로 사용 가능한 모델 구성:
+1.  **베이스 모델**: `HyperCLOVAX-SEED-Think-32B-Text-8bit` (동결됨)
+2.  **최종 어댑터**: `adapters_solverx_sft_hcx` (CPT 지식과 SFT 정렬 모두 포함)
 
-**Inference Command**:
+**추론 명령어**:
 ```bash
 python verify_solverx_sft.py
 ```
 
-### 13. Data Engineering Strategy
-We applied a structured data engineering approach for high-quality knowledge injection:
+### 13. 데이터 엔지니어링 전략
+고품질 지식 주입을 위해 구조화된 데이터 엔지니어링 접근 방식을 적용했습니다:
 
-- **CPT (Continuous Pre-training)**:
-    - Cleaned up customer documents into paragraphs and short sentences.
-    - Constructed a **raw text corpus** containing only pure knowledge snippets.
-- **SFT-Q&A (Instruction Tuning)**:
-    - Mass-produced practical scenario Q&A pairs based on the CPT knowledge.
-    - Used a hybrid approach of **LLM generation + Expert review** to ensure quality.
-- **SFT-CoT (Chain of Thought)**:
-    - Selected high-difficulty core tasks.
-    - Created tens to hundreds of **expert examples (Golden Data)**.
-    - Expanded and filtered these examples using LLMs to generate high-quality **synthetic data**.
+- **CPT (연속 사전 학습)**:
+    - 고객 문서를 문단·단문 단위로 클린업.
+    - 지식 단문만 있는 **raw text 코퍼스**로 구축.
+- **SFT-Q&A (지시 튜닝)**:
+    - CPT 지식을 근간으로 한 실무 시나리오 Q&A를 대량 생성.
+    - **LLM 생성 + 전문가 검수**의 하이브리드 접근 방식 사용.
+- **SFT-CoT (생각의 사슬)**:
+    - 핵심 난이도 태스크만 선별.
+    - 수십~수백 개의 **전문가 예제(Golden Data)** 작성.
+    - LLM으로 확장·필터링해 고품질 **합성 데이터** 추가.
 
-### Scripts Added
-- `evaluate_kmmlu_8bit.py`: KMMLU benchmark script for HCX.
-- `evaluate_kmmlu_gemma.py`: KMMLU benchmark script for Gemma.
-- `ask_identity_hcx.py`: Script to demonstrate identity hallucination.
-- `prepare_solverx_sft_data.py`: Prepares SFT data with identity correction.
-- `train_solverx_sft_8bit.sh`: SFT training script (resuming from CPT).
-- `verify_solverx_sft.py`: Verification script for the final SFT model.
+### 추가된 스크립트
+- `evaluate_kmmlu_8bit.py`: HCX용 KMMLU 벤치마크 스크립트.
+- `evaluate_kmmlu_gemma.py`: Gemma용 KMMLU 벤치마크 스크립트.
+- `ask_identity_hcx.py`: 정체성 환각을 시연하는 스크립트.
+- `prepare_solverx_sft_data.py`: 정체성 교정을 포함한 SFT 데이터 준비 스크립트.
+- `train_solverx_sft_hcx.sh`: SFT 학습 스크립트 (CPT에서 재개).
+- `verify_solverx_sft.py`: 최종 SFT 모델 검증 스크립트.
 
