@@ -235,7 +235,22 @@ To address the identity hallucination and enable proper chat capabilities, we im
     - **Domain Knowledge**: Correctly explains "SolverX Fusion" and other specific terms.
     - **Format**: Adheres strictly to the ChatML format.
 
-### 11. Final Model Architecture
+### 11. CPT vs. SFT Configuration Differences
+We used distinct configurations for each stage to serve their specific purposes.
+
+| Feature | CPT (Knowledge Injection) | SFT (Identity & Chat Alignment) |
+| :--- | :--- | :--- |
+| **Data Source** | `data_solverx_cpt` | `data_solverx_sft` |
+| **Data Format** | **Raw Text** (Textbook style) | **ChatML** (`<|im_start|>user...`) |
+| **Starting Point** | Base Model (From scratch) | **Resume from CPT Adapter** (`--resume-adapter-file`) |
+| **Batch Size** | 4 | 2 (Reduced for stability with longer chat tokens) |
+| **Iterations** | 600 | 400 |
+
+**Key Insight**:
+- **CPT** focuses on "reading and memorizing" raw facts.
+- **SFT** focuses on "learning how to speak" and correcting identity, while inheriting the knowledge from CPT via the resumed adapter.
+
+### 12. Final Model Architecture
 The final usable model consists of:
 1.  **Base Model**: `HyperCLOVAX-SEED-Think-32B-Text-8bit` (Frozen)
 2.  **Final Adapter**: `adapters_solverx_sft` (Contains both CPT knowledge and SFT alignment)
