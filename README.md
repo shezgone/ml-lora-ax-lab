@@ -98,7 +98,7 @@ SolverX에 대한 특정 질문에 대해 베이스 모델과 미세 조정된 �
 - **학습**:
     - 스크립트: `train_with_early_stopping.py`
     - 설정: LoRA Rank 4, Batch Size 4, LR 1e-5.
-    - 결과: 반복 90회에서 조기 종료 발동 (Val Loss ~2.4).
+    - 결과: 반복 90회에서 조기 종료 발동 (Val Loss ~2.65).
 - **검증**:
     - **문장 완성**: 모델이 "SolverX는 대부분의 고객에게..." -> "베타 PINN 모드 대신 서러게이트 모드를 추천한다."와 같은 문장을 완벽하게 완성함.
     - **대화 능력**: 모델이 *사실*은 학습했지만, CPT는 대화가 아닌 텍스트 패턴만 가르치기 때문에 대화 형식의 *질문*에 답하는 데 어려움을 겪음.
@@ -195,7 +195,7 @@ python train_with_early_stopping.py \
    python compare_models.py
    ```
 
-## 최근 업데이트 (2026-01-02)
+## 최근 업데이트 (2026-01-04)
 
 ### 8. 성능 평가 (KMMLU 벤치마크)
 **8비트 양자화된 HyperCLOVA X 32B** 모델을 **KMMLU (Korean Massive Multitask Language Understanding)** 벤치마크를 사용하여 평가하여 기본 능력과 양자화의 영향을 확인했습니다.
@@ -231,9 +231,10 @@ python train_with_early_stopping.py \
     - **데이터**: `data_solverx_sft` (CPT 데이터 변환본 + 정체성 교정 쌍).
 
 - **결과**:
-    - **정체성**: "저는 네이버가 개발한 HyperCLOVA X입니다"라고 올바르게 답변.
+    - **정체성**: "저는 네이버가 개발한 초거대 AI, HyperCLOVA X입니다"라고 올바르게 답변.
     - **도메인 지식**: "SolverX Fusion" 및 기타 특정 용어를 올바르게 설명.
     - **형식**: ChatML 형식을 엄격하게 준수.
+    - **학습 지표**: 400 Iteration에서 완료, Validation Loss ~0.22 도달.
 
 ### 11. CPT vs. SFT 설정 차이점
 각 단계의 특정 목적을 위해 서로 다른 설정을 사용했습니다.
@@ -274,7 +275,22 @@ python verify_solverx_sft.py
     - 수십~수백 개의 **전문가 예제(Golden Data)** 작성.
     - LLM으로 확장·필터링해 고품질 **합성 데이터** 추가.
 
+### 14. 실험 결과: 최종 검증 (2026-01-04)
+재학습된 SFT 모델의 최종 검증 결과입니다. 환각 없이 정확한 도메인 지식과 정체성을 보여줍니다.
+
+| 카테고리 | 질문 (Input) | SFT 모델 응답 (Output) |
+| :--- | :--- | :--- |
+| **Identity** | "너는 누구니?" | **"저는 네이버가 개발한 초거대 AI, HyperCLOVA X입니다."** |
+| **Domain (Definition)** | "SolverX Fusion이 뭐야?" | **"SolverX Fusion은 구조 해석과 열 해석을 동시에 예측하는 멀티피직스 모델입니다."** |
+| **Domain (Fact)** | "SolverX는 언제 설립되었나요?" | **"SolverX는 2022년에 설립된 가상의 AI CAE 회사이다."** |
+| **Domain (Concept)** | "Physics Loss가 뭐야?" | **"물리 법칙(보존 법칙 등)을 손실 함수에 포함시켜, 데이터가 적어도 물리적으로 타당한 결과를 내도록 하는 기술입니다."** |
+
+**분석**:
+- **CPT의 한계**: 문장 완성(Completion) 테스트에서는 정확한 지식을 출력했으나, 대화(Chat) 형식으로 물어보면 베이스 모델의 환각 패턴을 따라가는 경향이 있음.
+- **SFT의 역할**: CPT가 학습한 지식을 대화 맥락에서 올바르게 인출하도록 연결하고, 정체성을 교정함.
+
 ### 추가된 스크립트
+- `compare_hcx_stages.py`: Base, CPT, SFT 모델의 단계별 성능을 비교 검증하는 스크립트.
 - `evaluate_kmmlu_8bit.py`: HCX용 KMMLU 벤치마크 스크립트.
 - `evaluate_kmmlu_gemma.py`: Gemma용 KMMLU 벤치마크 스크립트.
 - `ask_identity_hcx.py`: 정체성 환각을 시연하는 스크립트.
