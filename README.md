@@ -6,6 +6,15 @@
 
 ## 프로젝트 구조
 
+- `src/`: 소스 코드가 포함된 메인 디렉토리.
+    - `data_prep/`: 데이터 전처리 및 변환 스크립트 (`prepare_*.py`, `convert_hyperclova.py` 등).
+    - `training/`: 모델 학습 및 미세 조정 스크립트 (`train_*.sh`, `train_*.py` 등).
+    - `inference/`: 추론 실행 스크립트 (`infer_*.py` 등).
+    - `evaluation/`: 모델 평가, 비교 및 검증 스크립트 (`evaluate_*.py`, `compare_*.py`, `verify_*.py` 등).
+    - `demo/`: 데모 애플리케이션 스크립트 (`demo_*.py` 등).
+- `docs/`: 프로젝트 문서 및 발표 자료 (`.md`, `.pptx`).
+- `notebooks/`: 주피터 노트북 파일 (`.ipynb`).
+- `data_raw/`: 원본 데이터 파일 (`.jsonl`).
 - `adapters/`: Gemma 9B용 미세 조정된 LoRA 어댑터 가중치.
 - `adapters_solverx_cpt_hcx/`: HyperCLOVA X 32B (8-bit)용 CPT LoRA 어댑터 가중치.
 - `adapters_solverx_sft_hcx/`: HyperCLOVA X 32B (8-bit)용 SFT LoRA 어댑터 가중치.
@@ -14,19 +23,6 @@
 - `data_solverx_sft/`: 지도 미세 조정(SFT)을 위한 대화 형식 데이터.
 - `models/`: 대규모 모델 가중치 디렉토리.
     - `HyperCLOVAX-SEED-Think-32B-Text-8bit/`: HyperCLOVA X의 8비트 양자화된 텍스트 전용 버전.
-- `convert_hyperclova.py`: VLM에서 텍스트 모델을 추출하고 8비트로 양자화하는 스크립트.
-- `train_with_early_stopping.py`: 조기 종료(Early Stopping)를 지원하는 커스텀 학습 스크립트.
-- `train_solverx_cpt_hcx.sh`: 8비트 모델에서 CPT를 실행하는 쉘 스크립트.
-- `train_solverx_sft_hcx.sh`: 8비트 모델에서 SFT를 실행하는 쉘 스크립트.
-- `verify_cpt_completion.py`: 문장 완성을 통해 CPT 지식 주입을 검증하는 스크립트.
-- `test_quantized_inference.py`: 8비트 모델에서 추론을 테스트하는 스크립트.
-- `prepare_solverx_sft_data.py`: CPT 데이터를 SFT 형식으로 변환하는 스크립트.
-- `solverx_knowledge.jsonl`: 원본 원시 지식 데이터.
-- `prepare_mlx_data.py`: 원시 데이터를 대화 형식 학습 데이터로 변환하는 스크립트.
-- `infer_gemma.py`: 베이스 모델(튜닝 전)로 추론을 실행하는 스크립트.
-- `infer_gemma_lora.py`: 미세 조정된 모델로 추론을 실행하는 스크립트.
-- `compare_models.py`: 베이스 모델과 미세 조정된 모델 간의 응답을 비교하는 스크립트.
-- `verify_general_performance.py`: 모델이 새로운 사실을 학습하면서 일반 지식을 유지하는지 검증하는 스크립트.
 
 ## 워크플로우 요약
 
@@ -36,8 +32,8 @@
 - 게이트 모델 `google/gemma-2-9b-it`에 접근하기 위해 Hugging Face 인증.
 
 ### 2. 데이터 준비 (Gemma 9B)
-- **소스**: SolverX에 대한 사실이 포함된 `solverx_knowledge.jsonl`.
-- **과정**: `prepare_mlx_data.py`를 사용하여 사실들을 대화 형식(사용자 질문 -> 어시스턴트 답변)으로 변환.
+- **소스**: SolverX에 대한 사실이 포함된 `data_raw/solverx_knowledge.jsonl`.
+- **과정**: `src/data_prep/prepare_mlx_data.py`를 사용하여 사실들을 대화 형식(사용자 질문 -> 어시스턴트 답변)으로 변환.
 - **출력**: `data_mlx/train.jsonl` 및 `data_mlx/valid.jsonl`.
 
 ### 3. 미세 조정 (LoRA) - Gemma 9B
@@ -69,7 +65,7 @@ SolverX에 대한 특정 질문에 대해 베이스 모델과 미세 조정된 �
 ### 5. 일반 능력 검증 (Gemma 9B)
 모델이 새로운 특정 사실을 학습하면서 원래의 일반 지식을 유지하는지(치명적 망각 방지) 검증했습니다.
 
-**테스트 스크립트**: `verify_general_performance.py`
+**테스트 스크립트**: `src/evaluation/verify_gemma_general_performance_9b.py`
 
 | 카테고리 | 질문 | 결과 |
 | :--- | :--- | :--- |
@@ -88,7 +84,7 @@ SolverX에 대한 특정 질문에 대해 베이스 모델과 미세 조정된 �
 - **과제**: 원본 모델은 VLM(Vision-Language Model)이며 16비트(~64GB)로, 48GB 메모리 제한을 초과하고 `mlx-lm`에서 직접 지원하지 않음.
 - **해결책**:
     1.  **추출**: VLM에서 텍스트 백본(Llama 호환)만 추출.
-    2.  **양자화**: 커스텀 스크립트(`convert_hyperclova.py`)를 사용하여 모델을 **8비트**로 변환.
+    2.  **양자화**: 커스텀 스크립트(`src/data_prep/convert_hyperclova.py`)를 사용하여 모델을 **8비트**로 변환.
     3.  **결과**: 모델 크기를 **~33GB**로 줄여 48GB Mac에서 실행 가능하게 함.
 
 #### B. LoRA를 이용한 연속 사전 학습 (CPT)
@@ -96,7 +92,7 @@ SolverX에 대한 특정 질문에 대해 베이스 모델과 미세 조정된 �
 - **방법**: 조기 종료(Early Stopping)를 포함한 QLoRA (Quantized LoRA).
 - **데이터**: SolverX에 대한 원시 텍스트 문장 (`data_solverx_cpt`).
 - **학습**:
-    - 스크립트: `train_with_early_stopping.py`
+    - 스크립트: `src/training/train_with_early_stopping.py`
     - 설정: LoRA Rank 4, Batch Size 4, LR 1e-5.
     - 결과: 반복 90회에서 조기 종료 발동 (Val Loss ~2.65).
 - **검증**:
@@ -105,7 +101,7 @@ SolverX에 대한 특정 질문에 대해 베이스 모델과 미세 조정된 �
 
 #### C. 다음 단계: 지도 미세 조정 (SFT)
 - 대화 능력 문제를 해결하기 위해 두 번째 학습 단계(SFT)를 준비했습니다.
-- **과정**: `prepare_solverx_sft_data.py`를 사용하여 CPT 텍스트 데이터를 ChatML 형식(`User: Question -> Assistant: Answer`)으로 변환.
+- **과정**: `src/data_prep/prepare_solverx_sft_data.py`를 사용하여 CPT 텍스트 데이터를 ChatML 형식(`User: Question -> Assistant: Answer`)으로 변환.
 - **계획**: 이 대화 데이터를 사용하여 CPT 모델 위에 새로운 어댑터를 학습.
 
 ### 7. 인사이트: 암기 vs. 추론
@@ -128,7 +124,7 @@ SolverX에 대한 특정 질문에 대해 베이스 모델과 미세 조정된 �
         - **질문**: "Python으로 MAB-TS 알고리즘 구현해줘."
         - **베이스 모델**: `numpy`를 사용하여 올바른 Python 코드 제공.
         - **미세 조정된 모델 (수정 전)**: 완전히 실패하고 SolverX에 대한 무관한 문장 출력 ("SolverX는 사용자가 가중치를 조정할 수 있게 합니다...").
-        - **테스트 스크립트**: `test_mab_ts.py`
+        - **테스트 스크립트**: `src/evaluation/test_gemma_mab_ts.py`
 
 4.  **구현된 해결책: 데이터 믹싱**:
     - 학습 데이터에 약 15개의 일반 지식 Q&A 쌍(Python 코딩, 상식, 인사)을 추가했습니다.
@@ -148,7 +144,7 @@ SolverX에 대한 특정 질문에 대해 베이스 모델과 미세 조정된 �
 체크포인트에서 학습을 재개하려면 `--resume-adapter-file` 인자를 사용하세요.
 
 ```bash
-python train_with_early_stopping.py \
+python src/training/train_with_early_stopping.py \
     --model models/HyperCLOVAX-SEED-Think-32B-Text-8bit \
     --train \
     --data data_solverx_cpt \
@@ -160,7 +156,7 @@ python train_with_early_stopping.py \
 CPT 중에 학습된 지식을 사용하여 지도 미세 조정(SFT)을 수행하려면, CPT 어댑터를 로드하고 SFT 데이터셋으로 학습합니다.
 
 ```bash
-python train_with_early_stopping.py \
+python src/training/train_with_early_stopping.py \
     --model models/HyperCLOVAX-SEED-Think-32B-Text-8bit \
     --train \
     --data data_solverx_sft \
@@ -187,12 +183,12 @@ python train_with_early_stopping.py \
 
 3. **추론 실행 (미세 조정됨)**:
    ```bash
-   python infer_gemma_lora.py
+   python src/inference/infer_gemma_lora_9b.py
    ```
 
 4. **비교 실행**:
    ```bash
-   python compare_models.py
+   python src/evaluation/compare_gemma_models_9b.py
    ```
 
 ## 최근 업데이트 (2026-01-04)
@@ -226,7 +222,7 @@ python train_with_early_stopping.py \
     - 처음부터 학습하지 않았습니다. **CPT 어댑터**(`adapters_solverx_cpt_hcx`)를 로드하고 SFT 데이터셋으로 학습을 계속했습니다.
     - **명령어**:
       ```bash
-      ./train_solverx_sft_hcx.sh
+      ./src/training/train_solverx_sft_hcx.sh
       ```
     - **데이터**: `data_solverx_sft` (CPT 데이터 변환본 + 정체성 교정 쌍).
 
@@ -258,7 +254,7 @@ python train_with_early_stopping.py \
 
 **추론 명령어**:
 ```bash
-python verify_solverx_sft.py
+python src/evaluation/verify_solverx_sft.py
 ```
 
 ### 13. 데이터 엔지니어링 전략
@@ -290,11 +286,11 @@ python verify_solverx_sft.py
 - **SFT의 역할**: CPT가 학습한 지식을 대화 맥락에서 올바르게 인출하도록 연결하고, 정체성을 교정함.
 
 ### 추가된 스크립트
-- `compare_hcx_stages.py`: Base, CPT, SFT 모델의 단계별 성능을 비교 검증하는 스크립트.
-- `evaluate_kmmlu_8bit.py`: HCX용 KMMLU 벤치마크 스크립트.
-- `evaluate_kmmlu_gemma.py`: Gemma용 KMMLU 벤치마크 스크립트.
-- `ask_identity_hcx.py`: 정체성 환각을 시연하는 스크립트.
-- `prepare_solverx_sft_data.py`: 정체성 교정을 포함한 SFT 데이터 준비 스크립트.
-- `train_solverx_sft_hcx.sh`: SFT 학습 스크립트 (CPT에서 재개).
-- `verify_solverx_sft.py`: 최종 SFT 모델 검증 스크립트.
+- `src/evaluation/compare_hcx_stages.py`: Base, CPT, SFT 모델의 단계별 성능을 비교 검증하는 스크립트.
+- `src/evaluation/evaluate_kmmlu_8bit.py`: HCX용 KMMLU 벤치마크 스크립트.
+- `src/evaluation/evaluate_kmmlu_gemma.py`: Gemma용 KMMLU 벤치마크 스크립트.
+- `src/inference/ask_identity_hcx.py`: 정체성 환각을 시연하는 스크립트.
+- `src/data_prep/prepare_solverx_sft_data.py`: 정체성 교정을 포함한 SFT 데이터 준비 스크립트.
+- `src/training/train_solverx_sft_hcx.sh`: SFT 학습 스크립트 (CPT에서 재개).
+- `src/evaluation/verify_solverx_sft.py`: 최종 SFT 모델 검증 스크립트.
 
